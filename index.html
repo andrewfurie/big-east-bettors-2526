@@ -288,14 +288,12 @@ function renderAll(actualRankings, standings) {
     r++;
   });
 
-  const floor = Math.max(0, Math.min(...scored.map(p => p.total)) - 5);
-
   // Leaderboard
   const lbEl = document.getElementById('leaderboard-list');
   lbEl.innerHTML = '';
   scored.forEach((p, idx) => {
     const dr = p.displayRank;
-    const pct = Math.round(((p.total - floor) / (121 - floor)) * 100);
+    const pct = Math.round((p.total / 121) * 100);
     const rc = dr === 1 ? 'r1' : dr === 2 ? 'r2' : dr === 3 ? 'r3' : '';
     const medal = dr === 1 ? '🥇' : dr === 2 ? '🥈' : dr === 3 ? '🥉' : '';
     lbEl.innerHTML += `
