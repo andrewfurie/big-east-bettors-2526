@@ -242,24 +242,30 @@ const TIEBREAKERS = [
 
 // ============================================================
 // SCORING ENGINE
-// Matches Google Sheet: MAX(11 - ABS(actual_rank - predicted_rank), 0)
-// For each team, find where player predicted it vs where it actually finished
+// Exactly matches Google Sheet formula:
+//   For each predicted team at predicted rank D:
+//   MAX(11 - ABS(VLOOKUP(predicted_team, actual_standings) - D), 0)
+// We iterate through the player's picks (rows of their prediction),
+// look up each team's actual rank, and score the difference.
+// breakdown is indexed by predicted rank (player's list order).
 // ============================================================
 function scorePlayer(picks, actual) {
+  // Build lookup: team name -> actual rank
+  const actualRankOf = {};
+  actual.forEach((team, i) => { actualRankOf[team] = i + 1; });
+
   let total = 0;
   const breakdown = [];
-  // Build a map: team -> predicted rank (from player's picks list)
-  const predictedRankOf = {};
-  picks.forEach((team, i) => { predictedRankOf[team] = i + 1; });
 
-  // Score each actual team
-  actual.forEach((team, i) => {
-    const actualRank = i + 1;
-    const predictedRank = predictedRankOf[team] || 0;
-    const pts = predictedRank === 0 ? 0 : Math.max(0, 11 - Math.abs(actualRank - predictedRank));
+  picks.forEach((predictedTeam, i) => {
+    const predictedRank = i + 1;
+    const actualRank = actualRankOf[predictedTeam] ?? 0;
+    const pts = actualRank === 0 ? 0 : Math.max(0, 11 - Math.abs(actualRank - predictedRank));
     total += pts;
-    breakdown.push({ team, actualRank, predictedRank, pts });
+    // Store keyed by predictedRank so display can look up pts for picks[i]
+    breakdown.push({ predictedTeam, predictedRank, actualRank, pts });
   });
+
   return { total, breakdown };
 }
 
@@ -309,18 +315,15 @@ function renderAll(actualRankings, standings) {
   const picksEl = document.getElementById('picks-grid');
   picksEl.innerHTML = '';
   scored.forEach(p => {
-    // Build map of team -> predicted rank for display
-    const predRankOf = {};
-    p.picks.forEach((team, i) => { predRankOf[team] = i + 1; });
-
-    const rows = actualRankings.map((team, i) => {
-      const bd = p.breakdown.find(b => b.team === team);
+    // Iterate player's picks: show what they predicted at each rank + pts for that pick
+    const rows = p.picks.map((predictedTeam, i) => {
+      const bd = p.breakdown.find(b => b.predictedRank === i + 1);
       const pts = bd ? bd.pts : 0;
-      const pickedTeam = p.picks[i] || '—';
+      const actualTeamHere = actualRankings[i] || '—';
       return `<div class="detail-row">
         <span class="d-rank">${i+1}</span>
-        <span class="d-actual">${team}</span>
-        <span>${pickedTeam}</span>
+        <span class="d-actual">${actualTeamHere}</span>
+        <span>${predictedTeam}</span>
         <span class="d-pts ${ptsClass(pts)}">${pts}</span>
       </div>`;
     }).join('');
