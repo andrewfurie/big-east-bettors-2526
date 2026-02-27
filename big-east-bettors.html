@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big East Bettors 2025–26</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1b2a; --navy2: #152235; --gold: #e8b84b; --gold2: #f5d080;
+    --white: #f0ece2; --muted: #8a9ab0; --card: #1a2a3d; --border: #243550;
+    --green: #6ee7a0; --red: #f07070;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--navy); color: var(--white); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #0a1520 0%, #1a2a3d 100%);
+    border-bottom: 3px solid var(--gold); padding: 28px 24px 20px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  header::before { content: '🏀'; position: absolute; font-size: 180px; opacity: 0.04; top: -30px; left: -20px; }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.4rem, 7vw, 4rem); letter-spacing: 3px; color: var(--gold); line-height: 1; }
+  header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+
+  .update-bar {
+    background: var(--navy2); border-bottom: 1px solid var(--border); padding: 8px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.78rem; color: var(--muted); flex-wrap: wrap; gap: 8px;
+  }
+  .status-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: 6px; background: var(--muted); vertical-align: middle; transition: background 0.5s;
+  }
+  .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .status-dot.error { background: var(--red); }
+  .highlight { color: var(--gold2); font-weight: 600; }
+
+  nav { display: flex; border-bottom: 2px solid var(--border); background: var(--navy2); padding: 0 20px; }
+  nav button {
+    background: none; border: none; color: var(--muted); font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem; letter-spacing: 1.5px; padding: 14px 20px; cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s;
+  }
+  nav button.active, nav button:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 16px 60px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .notice { border-radius: 8px; padding: 12px 16px; font-size: 0.8rem; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
+  .notice.info { background: rgba(232,184,75,0.07); border: 1px solid rgba(232,184,75,0.2); }
+  .notice.err { background: rgba(240,112,112,0.1); border: 1px solid rgba(240,112,112,0.3); color: #f5a0a0; }
+  .notice strong { color: var(--gold2); }
+  .notice a, .notice button.link { color: var(--gold2); background: none; border: none; cursor: pointer; font-size: inherit; text-decoration: underline; padding: 0; }
+
+  .spinner-wrap { text-align: center; padding: 60px 0; color: var(--muted); }
+  .spinner { display: inline-block; width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .leaderboard { display: flex; flex-direction: column; gap: 10px; }
+  .player-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+    transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden;
+    animation: fadeUp 0.35s ease both;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .player-card:hover { border-color: var(--gold); background: #1f3248; }
+  .player-card.gold-border { border-color: var(--gold); }
+  .player-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--muted); min-width: 40px; text-align: center; }
+  .player-rank.r1 { color: #ffd700; } .player-rank.r2 { color: #c0c0c0; } .player-rank.r3 { color: #cd7f32; }
+  .medal { font-size: 1.3rem; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); opacity: 0.75; }
+  .player-name { font-size: 1.05rem; font-weight: 600; flex: 1; }
+  .score-bar-wrap { flex: 1; max-width: 160px; }
+  .score-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 3px; }
+  .score-pct { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+  .player-score { text-align: right; padding-right: 28px; }
+  .player-score .pts { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--gold); line-height: 1; }
+  .player-score .label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .standings-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 22px; overflow: hidden; }
+  .section-title { background: var(--border); padding: 10px 18px; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 2px; color: var(--gold2); }
+  .standings-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; }
+  .standing-chip { background: var(--navy); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; }
+  .standing-chip .rank { color: var(--gold); font-weight: 700; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; min-width: 18px; }
+  .standing-chip.tied { border-color: rgba(232,184,75,0.35); }
+
+  .player-detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 16px; margin-top: 8px; }
+  .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .detail-card-header { background: var(--border); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .dname { font-weight: 600; font-size: 0.9rem; }
+  .dtotal { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--gold); }
+  .detail-rows { padding: 6px 0; }
+  .detail-row { display: grid; grid-template-columns: 26px 1fr 1fr 30px; padding: 4px 14px; font-size: 0.78rem; gap: 4px; align-items: center; }
+  .detail-row:hover { background: #1f3248; }
+  .d-rank { color: var(--gold); font-weight: 700; }
+  .d-actual { color: var(--muted); font-size: 0.72rem; }
+  .d-pts { text-align: right; font-weight: 600; }
+  .d-pts.perfect { color: var(--green); } .d-pts.good { color: var(--gold2); } .d-pts.bad { color: var(--red); }
+
+  .tiebreaker-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-top: 28px; overflow: hidden; }
+  .tb-note { padding: 14px 18px; color: var(--muted); font-size: 0.83rem; font-style: italic; border-top: 1px solid var(--border); }
+  .tb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); padding: 14px; gap: 0; }
+  .tb-player { padding: 8px 10px; border-radius: 6px; }
+  .tb-player:hover { background: #1f3248; }
+  .tb-player-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
+  .tb-picks { font-size: 0.75rem; color: var(--muted); }
+  .tb-picks span { display: block; }
+  .tb-picks strong { color: var(--white); }
+
+  .setup-guide { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; }
+  .setup-guide h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px; color: var(--gold); margin-bottom: 6px; }
+  .setup-guide > p { color: var(--muted); font-size: 0.83rem; margin-bottom: 22px; line-height: 1.6; }
+  hr.div { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+  .step { display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start; }
+  .step-num { background: var(--gold); color: var(--navy); font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .step-body h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+  .step-body p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-bottom: 4px; }
+  .step-body a { color: var(--gold2); }
+  .step-body code { background: var(--border); padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; color: var(--gold2); }
+
+  @media (max-width: 520px) { .score-bar-wrap { display: none; } nav button { padding: 12px 10px; font-size: 0.9rem; letter-spacing: 1px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Big East Bettors</h1>
+  <p>2025–26 Season · Conference Standings Prediction Game</p>
+</header>
+
+<div class="update-bar">
+  <div><span class="status-dot" id="status-dot"></span><span id="status-text">Fetching live standings…</span></div>
+  <div>Max possible: <span class="highlight">121 pts</span> &nbsp;·&nbsp; Tiebreakers: <span class="highlight">Pending end of season</span></div>
+</div>
+
+<nav>
+  <button class="active" onclick="showTab('leaderboard',this)">🏆 Leaderboard</button>
+  <button onclick="showTab('picks',this)">📋 Picks</button>
+  <button onclick="showTab('standings-tab',this)">📊 Standings</button>
+  <button onclick="showTab('setup',this)">⚙️ Setup</button>
+</nav>
+
+<main>
+
+<!-- LEADERBOARD -->
+<div id="leaderboard" class="tab-panel active">
+  <div id="lb-loading" class="spinner-wrap"><div class="spinner"></div><div>Loading live standings…</div></div>
+  <div id="lb-error" class="notice err" style="display:none">
+    ⚠️ <strong>Could not load live standings.</strong> Showing fallback data from early February 2025.
+    See the <button class="link" onclick="showTab('setup',document.querySelectorAll('nav button')[3])">⚙️ Setup tab</button> to deploy your Cloudflare Worker.
+  </div>
+  <div id="leaderboard-list" class="leaderboard" style="display:none"></div>
+</div>
+
+<!-- PICKS -->
+<div id="picks" class="tab-panel">
+  <div class="section-title" style="border-radius:8px 8px 0 0;margin-bottom:16px">📋 Player Predicted Rankings</div>
+  <div id="picks-grid" class="player-detail-grid"></div>
+  <div class="tiebreaker-section">
+    <div class="section-title">🎲 Tiebreaker &amp; Side Bet Picks</div>
+    <div id="tiebreaker-grid" class="tb-grid"></div>
+    <div class="tb-note">⏳ Tiebreakers scored after the season. Update the TIEBREAKERS array in the file to add real picks.</div>
+  </div>
+</div>
+
+<!-- STANDINGS TAB -->
+<div id="standings-tab" class="tab-panel">
+  <div class="standings-section">
+    <div class="section-title">📊 Current Big East Standings (Used for Scoring)</div>
+    <div id="standings-display" class="standings-grid"><span style="color:var(--muted);font-size:0.82rem">Loading…</span></div>
+  </div>
+  <div class="notice info">
+    <strong>Data source:</strong> Live data fetched from <a href="https://www.warrennolan.com/basketball/2026/conference/Big-East" target="_blank">warrennolan.com</a> via your Cloudflare Worker.
+    Ranked by conference win percentage (same order as official Big East site).
+  </div>
+</div>
+
+<!-- SETUP GUIDE -->
+<div id="setup" class="tab-panel">
+  <div class="setup-guide">
+    <h2>⚙️ One-Time Setup: Live Standings</h2>
+    <p>To auto-fetch live Big East standings, deploy a free Cloudflare Worker as a proxy. Takes ~5 minutes. No software downloads needed — everything runs in your browser.</p>
+    <hr class="div">
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Create a free Cloudflare account</h3>
+        <p>Go to <a href="https://workers.cloudflare.com" target="_blank">workers.cloudflare.com</a> and sign up. The free tier gives you 100,000 requests/day — more than enough.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Create a new Worker</h3>
+        <p>In the Cloudflare dashboard, click <strong>Workers &amp; Pages</strong> → <strong>Create</strong> → <strong>Create Worker</strong>. Name it something like <code>big-east-standings</code>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Paste the Worker code</h3>
+        <p>Click <strong>Edit Code</strong>. Delete the default code. Open the <code>cloudflare-worker.js</code> file (downloaded alongside this HTML file), copy everything, and paste it in. Click <strong>Deploy</strong>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Copy your Worker URL</h3>
+        <p>After deploying, Cloudflare shows your Worker URL — something like:<br><code>https://big-east-standings.yourname.workers.dev</code><br>Copy it.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h3>Paste the URL into this HTML file</h3>
+        <p>Open <code>big-east-bettors.html</code> in any text editor (Notepad, TextEdit, etc.). Find this line near the top of the <code>&lt;script&gt;</code>:</p>
+        <p><code>const WORKER_URL = "";</code></p>
+        <p>Paste your URL between the quotes and save. The site will now auto-fetch standings on every page load!</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <h3>Host on GitHub Pages (recommended)</h3>
+        <p>Go to <a href="https://github.com" target="_blank">github.com</a> → New repository → Upload your HTML file → Settings → Pages → deploy from main. Your site will be live at <code>https://YOUR-USERNAME.github.io/REPO-NAME</code> — shareable with everyone.</p>
+      </div>
+    </div>
+    <hr class="div">
+    <p style="font-size:0.8rem;color:var(--muted)">✅ Once configured, the site is fully automatic for the rest of the season. No manual updates needed!</p>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ============================================================
+// ✏️  Paste your Cloudflare Worker URL here after setup
+// ============================================================
+const WORKER_URL = ""; // e.g. "https://big-east-standings.yourname.workers.dev"
+
+// ============================================================
+// FALLBACK: used until Worker is set up, or if fetch fails
+// Reflects standings as of early February 2025
+// ============================================================
+const FALLBACK_RANKINGS = [
+  "UCONN","St. John's","Villanova","Creighton","Seton Hall",
+  "Georgetown","Butler","Xavier","DePaul","Providence","Marquette"
+];
+
+// ============================================================
+// PLAYER PICKS (top pick = predicted 1st place, etc.)
+// ============================================================
+const PLAYERS = [
+  { name: "Alex Alcalay",      picks: ["UCONN","Villanova","Creighton","Marquette","St. John's","Seton Hall","Providence","Georgetown","Xavier","Butler","DePaul"] },
+  { name: "Leo",               picks: ["UCONN","St. John's","Villanova","Butler","Xavier","Creighton","Seton Hall","Georgetown","Marquette","Providence","DePaul"] },
+  { name: "Tina",              picks: ["UCONN","Seton Hall","St. John's","Villanova","Providence","Georgetown","Creighton","Xavier","Marquette","Butler","DePaul"] },
+  { name: "Chris Caprariello", picks: ["UCONN","Villanova","St. John's","Seton Hall","Creighton","Xavier","Georgetown","Butler","Providence","Marquette","DePaul"] },
+  { name: "Jack Ziegler",      picks: ["St. John's","Seton Hall","UCONN","Butler","Villanova","Xavier","Marquette","Georgetown","DePaul","Providence","Creighton"] },
+  { name: "Connor Landazuri",  picks: ["UCONN","St. John's","Creighton","Marquette","Providence","Villanova","Georgetown","Butler","Xavier","Seton Hall","DePaul"] },
+  { name: "Jake Dillon",       picks: ["UCONN","St. John's","Villanova","Creighton","Butler","Seton Hall","Georgetown","Marquette","Providence","Xavier","DePaul"] },
+  { name: "Ryan Hardiman",     picks: ["UCONN","St. John's","Villanova","Creighton","Butler","Marquette","Seton Hall","Providence","Xavier","Georgetown","DePaul"] },
+  { name: "Andrew Furie",      picks: ["UCONN","St. John's","Villanova","Butler","Seton Hall","Georgetown","Creighton","Providence","Marquette","DePaul","Xavier"] },
+  { name: "Jack McIntyre",     picks: ["UCONN","St. John's","Villanova","Creighton","Butler","Seton Hall","Creighton","Marquette","Providence","Xavier","DePaul"] },
+  { name: "Jack Bakey",        picks: ["UCONN","St. John's","Villanova","Xavier","Seton Hall","Butler","Creighton","Georgetown","Marquette","DePaul","Providence"] },
+  { name: "Jack She",          picks: ["UCONN","St. John's","Villanova","Georgetown","Marquette","Seton Hall","Creighton","Xavier","Butler","Providence","DePaul"] },
+  { name: "Patrick Hardiman",  picks: ["Seton Hall","St. John's","UCONN","Villanova","Marquette","Georgetown","Xavier","DePaul","Creighton","Butler","Providence"] },
+  { name: "Nick",              picks: ["UCONN","St. John's","Villanova","Georgetown","Marquette","Seton Hall","Xavier","Butler","Providence","DePaul","Seton Hall"] },
+  { name: "Annie Snyder",      picks: ["St. John's","UCONN","Villanova","Creighton","Marquette","Georgetown","Xavier","Butler","Providence","DePaul","Seton Hall"] },
+  { name: "Brandon Caprioni",  picks: ["UCONN","St. John's","Villanova","Butler","Georgetown","Seton Hall","Creighton","Xavier","Providence","Marquette","DePaul"] },
+];
+
+// ============================================================
+// TIEBREAKER / SIDE BET PICKS
+// Replace "TBD" with real answers once you have them.
+// Rename the keys ("Side Bet 1" etc.) to your actual questions.
+// ============================================================
+const TIEBREAKERS = [
+  { name: "Alex Alcalay",      picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Leo",               picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Tina",              picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Chris Caprariello", picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Jack Ziegler",      picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Connor Landazuri",  picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Jake Dillon",       picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Ryan Hardiman",     picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Andrew Furie",      picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Jack McIntyre",     picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Jack Bakey",        picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Jack She",          picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Patrick Hardiman",  picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Nick",              picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Annie Snyder",      picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+  { name: "Brandon Caprioni",  picks: { "Side Bet 1": "TBD", "Side Bet 2": "TBD" } },
+];
+
+// ============================================================
+// SCORING ENGINE
+// ============================================================
+function scorePlayer(picks, actual) {
+  let total = 0;
+  const breakdown = [];
+  actual.forEach((team, i) => {
+    const actualRank = i + 1;
+    const predictedRank = picks.indexOf(team) + 1;
+    const pts = predictedRank === 0 ? 0 : Math.max(0, 11 - Math.abs(actualRank - predictedRank));
+    total += pts;
+    breakdown.push({ team, actualRank, predictedRank, pts });
+  });
+  return { total, breakdown };
+}
+
+function ptsClass(p) { return p === 11 ? 'perfect' : p >= 9 ? 'good' : 'bad'; }
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll(actualRankings, standings) {
+  // Score & sort
+  const scored = PLAYERS.map(p => {
+    const { total, breakdown } = scorePlayer(p.picks, actualRankings);
+    return { ...p, total, breakdown };
+  }).sort((a, b) => b.total - a.total);
+
+  // Assign display ranks
+  let r = 1;
+  scored.forEach((p, i) => {
+    p.displayRank = (i > 0 && p.total === scored[i-1].total) ? scored[i-1].displayRank : r;
+    r++;
+  });
+
+  const floor = Math.max(0, Math.min(...scored.map(p => p.total)) - 5);
+
+  // Leaderboard
+  const lbEl = document.getElementById('leaderboard-list');
+  lbEl.innerHTML = '';
+  scored.forEach((p, idx) => {
+    const dr = p.displayRank;
+    const pct = Math.round(((p.total - floor) / (121 - floor)) * 100);
+    const rc = dr === 1 ? 'r1' : dr === 2 ? 'r2' : dr === 3 ? 'r3' : '';
+    const medal = dr === 1 ? '🥇' : dr === 2 ? '🥈' : dr === 3 ? '🥉' : '';
+    lbEl.innerHTML += `
+      <div class="player-card ${dr<=3?'gold-border':''}" style="animation-delay:${idx*0.04}s">
+        <div class="player-rank ${rc}">${dr>3?'#'+dr:''}</div>
+        <div class="player-name">${p.name}</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+          <div class="score-pct">${p.total} / 121</div>
+        </div>
+        <div class="player-score"><div class="pts">${p.total}</div><div class="label">pts</div></div>
+        ${medal?`<div class="medal">${medal}</div>`:''}
+      </div>`;
+  });
+
+  // Picks grid
+  const picksEl = document.getElementById('picks-grid');
+  picksEl.innerHTML = '';
+  scored.forEach(p => {
+    const rows = actualRankings.map((team, i) => {
+      const bd = p.breakdown.find(b => b.actualRank === i+1);
+      const pts = bd ? bd.pts : 0;
+      return `<div class="detail-row">
+        <span class="d-rank">${i+1}</span>
+        <span class="d-actual">${team}</span>
+        <span>${p.picks[i]||'—'}</span>
+        <span class="d-pts ${ptsClass(pts)}">${pts}</span>
+      </div>`;
+    }).join('');
+    picksEl.innerHTML += `
+      <div class="detail-card">
+        <div class="detail-card-header"><span class="dname">${p.name}</span><span class="dtotal">${p.total} pts</span></div>
+        <div class="detail-rows">
+          <div class="detail-row" style="opacity:0.45;font-size:0.7rem;padding-bottom:2px">
+            <span></span><span>Actual</span><span>Pick</span><span style="text-align:right">Pts</span>
+          </div>
+          ${rows}
+        </div>
+      </div>`;
+  });
+
+  // Standings chips
+  const sdEl = document.getElementById('standings-display');
+  sdEl.innerHTML = '';
+  standings.forEach(({ rank, team }) => {
+    const tied = standings.filter(s => s.rank === rank).length > 1;
+    sdEl.innerHTML += `
+      <div class="standing-chip ${tied?'tied':''}">
+        <span class="rank">${rank}</span>
+        <span>${team}</span>
+        ${tied?'<span style="color:var(--muted);font-size:0.68rem">(T)</span>':''}
+      </div>`;
+  });
+
+  // Tiebreakers
+  const tbEl = document.getElementById('tiebreaker-grid');
+  tbEl.innerHTML = '';
+  TIEBREAKERS.forEach(t => {
+    tbEl.innerHTML += `
+      <div class="tb-player">
+        <div class="tb-player-name">${t.name}</div>
+        <div class="tb-picks">${Object.entries(t.picks).map(([q,a])=>`<span><strong>${q}:</strong> ${a}</span>`).join('')}</div>
+      </div>`;
+  });
+
+  document.getElementById('lb-loading').style.display = 'none';
+  document.getElementById('leaderboard-list').style.display = 'flex';
+}
+
+// ============================================================
+// INIT: fetch live or fall back
+// ============================================================
+async function init() {
+  let actualRankings = null, standings = null;
+
+  if (WORKER_URL) {
+    try {
+      const resp = await fetch(WORKER_URL);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      if (data.orderedTeams?.length >= 11) {
+        actualRankings = data.orderedTeams;
+        standings = data.standings;
+        const dot = document.getElementById('status-dot');
+        dot.classList.add('live');
+        const t = new Date(data.lastFetched).toLocaleTimeString();
+        document.getElementById('status-text').innerHTML =
+          `Live standings as of <span class="highlight">${t}</span>`;
+      } else throw new Error('Bad data');
+    } catch(e) {
+      console.warn('Worker failed:', e);
+      showError();
+    }
+  } else {
+    showError(true);
+  }
+
+  if (!actualRankings) {
+    actualRankings = FALLBACK_RANKINGS;
+    standings = FALLBACK_RANKINGS.map((team, i) => ({ rank: i+1, team }));
+  }
+
+  renderAll(actualRankings, standings);
+}
+
+function showError(noWorker = false) {
+  document.getElementById('status-dot').classList.add('error');
+  document.getElementById('status-text').textContent = noWorker
+    ? 'Worker not configured — using fallback standings'
+    : 'Live fetch failed — using fallback standings';
+  document.getElementById('lb-error').style.display = 'block';
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(e => e.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+init();
+</script>
+</body>
+</html>
