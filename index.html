@@ -316,11 +316,11 @@ function renderAll(actualRankings, standings) {
     const rows = actualRankings.map((team, i) => {
       const bd = p.breakdown.find(b => b.team === team);
       const pts = bd ? bd.pts : 0;
-      const playerPredictedRank = predRankOf[team] || '?';
+      const pickedTeam = p.picks[i] || '—';
       return `<div class="detail-row">
         <span class="d-rank">${i+1}</span>
         <span class="d-actual">${team}</span>
-        <span>${playerPredictedRank}</span>
+        <span>${pickedTeam}</span>
         <span class="d-pts ${ptsClass(pts)}">${pts}</span>
       </div>`;
     }).join('');
