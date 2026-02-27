@@ -140,7 +140,6 @@
   <button class="active" onclick="showTab('leaderboard',this)">🏆 Leaderboard</button>
   <button onclick="showTab('picks',this)">📋 Picks</button>
   <button onclick="showTab('standings-tab',this)">📊 Standings</button>
-  <button onclick="showTab('setup',this)">⚙️ Setup</button>
 </nav>
 
 <main>
@@ -150,7 +149,6 @@
   <div id="lb-loading" class="spinner-wrap"><div class="spinner"></div><div>Loading live standings…</div></div>
   <div id="lb-error" class="notice err" style="display:none">
     ⚠️ <strong>Could not load live standings.</strong> Showing fallback data from early February 2025.
-    See the <button class="link" onclick="showTab('setup',document.querySelectorAll('nav button')[3])">⚙️ Setup tab</button> to deploy your Cloudflare Worker.
   </div>
   <div id="leaderboard-list" class="leaderboard" style="display:none"></div>
 </div>
@@ -178,61 +176,6 @@
   </div>
 </div>
 
-<!-- SETUP GUIDE -->
-<div id="setup" class="tab-panel">
-  <div class="setup-guide">
-    <h2>⚙️ One-Time Setup: Live Standings</h2>
-    <p>To auto-fetch live Big East standings, deploy a free Cloudflare Worker as a proxy. Takes ~5 minutes. No software downloads needed — everything runs in your browser.</p>
-    <hr class="div">
-
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <h3>Create a free Cloudflare account</h3>
-        <p>Go to <a href="https://workers.cloudflare.com" target="_blank">workers.cloudflare.com</a> and sign up. The free tier gives you 100,000 requests/day — more than enough.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <h3>Create a new Worker</h3>
-        <p>In the Cloudflare dashboard, click <strong>Workers &amp; Pages</strong> → <strong>Create</strong> → <strong>Create Worker</strong>. Name it something like <code>big-east-standings</code>.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <h3>Paste the Worker code</h3>
-        <p>Click <strong>Edit Code</strong>. Delete the default code. Open the <code>cloudflare-worker.js</code> file (downloaded alongside this HTML file), copy everything, and paste it in. Click <strong>Deploy</strong>.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-body">
-        <h3>Copy your Worker URL</h3>
-        <p>After deploying, Cloudflare shows your Worker URL — something like:<br><code>https://big-east-standings.yourname.workers.dev</code><br>Copy it.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-body">
-        <h3>Paste the URL into this HTML file</h3>
-        <p>Open <code>big-east-bettors.html</code> in any text editor (Notepad, TextEdit, etc.). Find this line near the top of the <code>&lt;script&gt;</code>:</p>
-        <p><code>const WORKER_URL = "https://long-salad-10c0.andrewfurie6.workers.dev";</code></p>
-        <p>Paste your URL between the quotes and save. The site will now auto-fetch standings on every page load!</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">6</div>
-      <div class="step-body">
-        <h3>Host on GitHub Pages (recommended)</h3>
-        <p>Go to <a href="https://github.com" target="_blank">github.com</a> → New repository → Upload your HTML file → Settings → Pages → deploy from main. Your site will be live at <code>https://YOUR-USERNAME.github.io/REPO-NAME</code> — shareable with everyone.</p>
-      </div>
-    </div>
-    <hr class="div">
-    <p style="font-size:0.8rem;color:var(--muted)">✅ Once configured, the site is fully automatic for the rest of the season. No manual updates needed!</p>
-  </div>
-</div>
 
 </main>
 
@@ -299,13 +242,20 @@ const TIEBREAKERS = [
 
 // ============================================================
 // SCORING ENGINE
+// Matches Google Sheet: MAX(11 - ABS(actual_rank - predicted_rank), 0)
+// For each team, find where player predicted it vs where it actually finished
 // ============================================================
 function scorePlayer(picks, actual) {
   let total = 0;
   const breakdown = [];
+  // Build a map: team -> predicted rank (from player's picks list)
+  const predictedRankOf = {};
+  picks.forEach((team, i) => { predictedRankOf[team] = i + 1; });
+
+  // Score each actual team
   actual.forEach((team, i) => {
     const actualRank = i + 1;
-    const predictedRank = picks.indexOf(team) + 1;
+    const predictedRank = predictedRankOf[team] || 0;
     const pts = predictedRank === 0 ? 0 : Math.max(0, 11 - Math.abs(actualRank - predictedRank));
     total += pts;
     breakdown.push({ team, actualRank, predictedRank, pts });
@@ -359,13 +309,18 @@ function renderAll(actualRankings, standings) {
   const picksEl = document.getElementById('picks-grid');
   picksEl.innerHTML = '';
   scored.forEach(p => {
+    // Build map of team -> predicted rank for display
+    const predRankOf = {};
+    p.picks.forEach((team, i) => { predRankOf[team] = i + 1; });
+
     const rows = actualRankings.map((team, i) => {
-      const bd = p.breakdown.find(b => b.actualRank === i+1);
+      const bd = p.breakdown.find(b => b.team === team);
       const pts = bd ? bd.pts : 0;
+      const playerPredictedRank = predRankOf[team] || '?';
       return `<div class="detail-row">
         <span class="d-rank">${i+1}</span>
         <span class="d-actual">${team}</span>
-        <span>${p.picks[i]||'—'}</span>
+        <span>${playerPredictedRank}</span>
         <span class="d-pts ${ptsClass(pts)}">${pts}</span>
       </div>`;
     }).join('');
