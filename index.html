@@ -218,7 +218,7 @@
       <div class="step-body">
         <h3>Paste the URL into this HTML file</h3>
         <p>Open <code>big-east-bettors.html</code> in any text editor (Notepad, TextEdit, etc.). Find this line near the top of the <code>&lt;script&gt;</code>:</p>
-        <p><code>const WORKER_URL = "long-salad-10c0.andrewfurie6.workers.dev";</code></p>
+        <p><code>const WORKER_URL = "https://long-salad-10c0.andrewfurie6.workers.dev";</code></p>
         <p>Paste your URL between the quotes and save. The site will now auto-fetch standings on every page load!</p>
       </div>
     </div>
@@ -240,7 +240,7 @@
 // ============================================================
 // ✏️  Paste your Cloudflare Worker URL here after setup
 // ============================================================
-const WORKER_URL = "long-salad-10c0.andrewfurie6.workers.dev"; // e.g. "long-salad-10c0.andrewfurie6.workers.dev"
+const WORKER_URL = "https://long-salad-10c0.andrewfurie6.workers.dev"; // e.g. "https://big-east-standings.yourname.workers.dev"
 
 // ============================================================
 // FALLBACK: used until Worker is set up, or if fetch fails
@@ -431,17 +431,19 @@ async function init() {
       } else throw new Error('Bad data');
     } catch(e) {
       console.warn('Worker failed:', e);
-      showError();
+      showError(false);
     }
   } else {
     showError(true);
   }
 
+  // Always fall back to hardcoded rankings if live fetch didn't work
   if (!actualRankings) {
     actualRankings = FALLBACK_RANKINGS;
     standings = FALLBACK_RANKINGS.map((team, i) => ({ rank: i+1, team }));
   }
 
+  // Always render — whether live or fallback
   renderAll(actualRankings, standings);
 }
 
